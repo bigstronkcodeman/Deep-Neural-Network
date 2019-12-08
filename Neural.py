@@ -1,7 +1,9 @@
 # Deep Neural Network implementation (Multi-layer Perceptron)
-# Author: Phillip Boudreau, Taylor Kinsey
+# Author: Phillip Boudreau
 # Date: 11/26/2019
 import numpy as np
+
+from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 
 def sum(li):
@@ -21,7 +23,7 @@ class NeuralNetwork:
         num_outputs: number of neurons on the output layer
         """
         # initialize learning rate
-        self.learning_rate = 0.2
+        self.learning_rate = 0.01
 
         # initialize random synaptic weights and biases for first layer (input
         # layer) of the network
@@ -87,6 +89,7 @@ class NeuralNetwork:
                     layer_results.append(self.sigmoid(np.matmul(self.synaptic_weights[i], layer_results[-1]) + self.biases[i]))
 
                 # pump inputs through final layer of network
+                #layer_results.append(self.sigmoid(np.matmul(self.synaptic_weights[-1], layer_results[-1]) + self.biases[-1]))
                 layer_results.append(self.sigmoid(np.matmul(self.synaptic_weights[-1], layer_results[-1]) + self.biases[-1]))
 
                 # calculate output error and deltas for weights on last layer
@@ -105,8 +108,6 @@ class NeuralNetwork:
                     output_bias_deltas[i][0] *= self.learning_rate
                 weight_deltas = [output_weight_deltas]
                 bias_deltas = [output_bias_deltas]
-                #print('output deltas:\n',output_weight_deltas)
-                #print('bias deltas:\n', output_bias_deltas)
 
                 # calculate weight and bias deltas for hidden layers
                 save = [output_error[i][0] for i in range(len(output_error))]
@@ -158,10 +159,6 @@ class NeuralNetwork:
                 for i in range(len(weight_deltas)):
                     self.synaptic_weights[i] -= weight_deltas[i]
                     self.biases[i] -= bias_deltas[i]
-                    
-#nn = NeuralNetwork(2,[16,16],1)
-#nn.train([[2,3],[4,2],[-1,2],[9,0]], [[0.01],[0.999],[0.2942],[0.4029]], 1000)
-#print('OUT:', nn.feed_forward([2,3]))
 
 def frange(x, y, step):
     while x < y:
@@ -169,18 +166,25 @@ def frange(x, y, step):
         x += step
 
 
-
-
-
-nn = NeuralNetwork(2, [5], 1)
-nn.train([[0,0],[0,1],[1,0],[1,1]], [[0],[1],[1],[0]], 10000)
+inputs = [[0.2,0.4],
+          [0.3,0.1],
+          [0.2,0.1],
+          [0.1,0.5]]
+outputs = [[0.6],
+           [0.4],
+           [0.3],
+           [0.6]]
+nn = NeuralNetwork(2, [4,3,2,1,2,3,4], 1)
+nn.train([[0,0],[0,1],[1,0],[1,1]], [[0],[1],[1],[0]], 100000)
 
 x = []
 y = []
-for i in frange(0, 1.0, 0.1):
-    for j in frange(0, 1.0, 0.1):
-        if nn.feed_forward([i,j]) > 0.5:
-            x.append(i)
-            y.append(j)
-plt.scatter(x, y)
+z = []
+for i in frange(0, 1.0, 0.0333):
+    for j in frange(0, 1.0, 0.0333):
+        ff = nn.feed_forward([i,j])
+        x.append(i)
+        y.append(j)
+        z.append(ff)
+plt.figure().add_subplot(111, projection='3d').scatter(x, y, z, c='g', marker='o')
 plt.show()
