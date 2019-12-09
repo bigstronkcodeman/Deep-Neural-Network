@@ -2,6 +2,7 @@
 # Author: Phillip Boudreau
 # Date: 11/26/2019
 import numpy as np
+import random as rand
 
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
@@ -23,7 +24,7 @@ class NeuralNetwork:
         num_outputs: number of neurons on the output layer
         """
         # initialize learning rate
-        self.learning_rate = 0.01
+        self.learning_rate = 1
 
         # initialize random synaptic weights and biases for first layer (input
         # layer) of the network
@@ -89,11 +90,9 @@ class NeuralNetwork:
                     layer_results.append(self.sigmoid(np.matmul(self.synaptic_weights[i], layer_results[-1]) + self.biases[i]))
 
                 # pump inputs through final layer of network
-                #layer_results.append(self.sigmoid(np.matmul(self.synaptic_weights[-1], layer_results[-1]) + self.biases[-1]))
                 layer_results.append(self.sigmoid(np.matmul(self.synaptic_weights[-1], layer_results[-1]) + self.biases[-1]))
 
-                # calculate output error and deltas for weights on last layer
-                # of network
+                # calculate output error and deltas for weights on last layer of network
                 output_error = np.array(layer_results[-1] - training_output)
                 output_weight_deltas = np.full(self.synaptic_weights[-1].shape, 1.0)
                 output_bias_deltas = np.full(self.biases[-1].shape, 1.0)
@@ -160,31 +159,61 @@ class NeuralNetwork:
                     self.synaptic_weights[i] -= weight_deltas[i]
                     self.biases[i] -= bias_deltas[i]
 
+
 def frange(x, y, step):
     while x < y:
         yield x
         x += step
 
+def bitz(num, n):
+    binary = []
+    while num != 0:
+        bit = num % 2
+        binary.insert(0, bit)
+        num = int(num / 2)
+    while len(binary) < n:
+        binary.insert(0, 0)
+    return binary
 
-inputs = [[0.2,0.4],
-          [0.3,0.1],
-          [0.2,0.1],
-          [0.1,0.5]]
-outputs = [[0.6],
-           [0.4],
-           [0.3],
-           [0.6]]
-nn = NeuralNetwork(2, [4,3,2,1,2,3,4], 1)
-nn.train([[0,0],[0,1],[1,0],[1,1]], [[0],[1],[1],[0]], 100000)
+#inputs = [[0,0],
+#          [0,1],
+#          [1,0],
+#          [1,1]]
+#outputs = [[0],
+#           [1],
+#           [1],
+#           [0]]
+nums = [i for i in range(0, 128, 1)]
+rand.shuffle(nums)
+inputs = [bitz(i,8) for i in nums]
+outputs = [[1] if i % 3 == 0 and i > 0 else [0] for i in nums]
+nn = NeuralNetwork(8, [25], 1)
+nn.train(inputs, outputs, 10000)
+for i in range(256):
+    result = nn.feed_forward(bitz(i,8))
+    if result > 0.5 and i % 3 == 0:
+        print(i, ': ', result, ' nn is correct')
+    else:
+       if result < 0.5 and i % 3 != 0:
+           print(i, ': ', result, ' nn is correct')
+       else:
+           print(i, ': ', result, ' nn is incorrect')
 
 x = []
 y = []
-z = []
-for i in frange(0, 1.0, 0.0333):
-    for j in frange(0, 1.0, 0.0333):
-        ff = nn.feed_forward([i,j])
-        x.append(i)
-        y.append(j)
-        z.append(ff)
-plt.figure().add_subplot(111, projection='3d').scatter(x, y, z, c='g', marker='o')
+for i in range(25):
+    x.append(i)
+    y.append(nn.feed_forward(bitz(i,8)))
+plt.scatter(x,y)
 plt.show()
+#x = []
+#y = []
+#z = []
+#for i in frange(0, 1.0, 0.0333):
+#    for j in frange(0, 1.0, 0.0333):
+#        ff = nn.feed_forward([i,j])
+#        x.append(i)
+#        y.append(j)
+#        z.append(ff)
+#plt.figure().add_subplot(111, projection='3d').scatter(x, y, z, c='g', marker='o')
+#plt.show()
