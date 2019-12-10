@@ -24,7 +24,7 @@ class NeuralNetwork:
         num_outputs: number of neurons on the output layer
         """
         # initialize learning rate
-        self.learning_rate = 1
+        self.learning_rate = 0.1
 
         # initialize random synaptic weights and biases for first layer (input
         # layer) of the network
@@ -50,6 +50,7 @@ class NeuralNetwork:
     def sigmoid_derivative(self, x):
         return x * (1 - x)
 
+    # feed inputs through the network
     def feed_forward(self, input):
         new_input = self.sigmoid(np.matmul(self.synaptic_weights[0], np.array([input]).T) + self.biases[0])
 
@@ -71,6 +72,7 @@ class NeuralNetwork:
             raise Exception('Different number of training inputs and training outputs!')
             
         for iters in range(iterations):
+            # calculate total cost of network
             average_output_error = np.full((len(training_outputs[0]), 1), 0.0)
             for inp, outp in zip(training_inputs, training_outputs):
                 training_output = np.array([outp]).T
@@ -78,18 +80,19 @@ class NeuralNetwork:
                 average_output_error += np.array(diff * diff)
             average_output_error /= len(training_outputs)
             print('Training iteration ', iters, ' total error: ', average_output_error)
+
             for inp, outp in zip(training_inputs, training_outputs):
                 training_input = np.array([inp]).T
                 training_output = np.array([outp]).T
 
-                # pump inputs through first layer of network
+                # pump inputs through first layer of network and save result
                 layer_results = [self.sigmoid(np.matmul(self.synaptic_weights[0], training_input) + self.biases[0])]
 
-                # sequentially pump inputs through hidden layers of the network
+                # sequentially pump inputs through hidden layers of the network and save results
                 for i in range(1, len(self.synaptic_weights) - 1):
                     layer_results.append(self.sigmoid(np.matmul(self.synaptic_weights[i], layer_results[-1]) + self.biases[i]))
 
-                # pump inputs through final layer of network
+                # pump inputs through final layer of network and save result
                 layer_results.append(self.sigmoid(np.matmul(self.synaptic_weights[-1], layer_results[-1]) + self.biases[-1]))
 
                 # calculate output error and deltas for weights on last layer of network
@@ -108,7 +111,7 @@ class NeuralNetwork:
                 weight_deltas = [output_weight_deltas]
                 bias_deltas = [output_bias_deltas]
 
-                # calculate weight and bias deltas for hidden layers
+                # calculate synaptic weight and bias deltas for hidden layers
                 save = [output_error[i][0] for i in range(len(output_error))]
                 for layer in range(len(self.synaptic_weights) - 2, 0, -1):
                     next_save = []
@@ -134,7 +137,7 @@ class NeuralNetwork:
                     weight_deltas.insert(0, layer_weight_deltas)
                     bias_deltas.insert(0, layer_bias_deltas)
 
-                # calculate weight and bias deltas for input layer
+                # calculate synaptic weight and bias deltas for input layer
                 input_weight_deltas = np.full(self.synaptic_weights[0].shape, 1.0)
                 input_bias_deltas = np.full(self.biases[0].shape, 1.0)
                 for i in range(len(input_weight_deltas)):
@@ -155,6 +158,7 @@ class NeuralNetwork:
                 weight_deltas.insert(0, input_weight_deltas)
                 bias_deltas.insert(0, input_bias_deltas)
 
+                # update synaptic weights and biases
                 for i in range(len(weight_deltas)):
                     self.synaptic_weights[i] -= weight_deltas[i]
                     self.biases[i] -= bias_deltas[i]
@@ -175,37 +179,44 @@ def bitz(num, n):
         binary.insert(0, 0)
     return binary
 
-#inputs = [[0,0],
-#          [0,1],
-#          [1,0],
-#          [1,1]]
-#outputs = [[0],
-#           [1],
-#           [1],
-#           [0]]
-nums = [i for i in range(0, 128, 1)]
+
+b = 15
+d = 3
+nums = [rand.randint(2500,10000) for i in range(0, 1000, 1)]
 rand.shuffle(nums)
-inputs = [bitz(i,8) for i in nums]
-outputs = [[1] if i % 3 == 0 and i > 0 else [0] for i in nums]
-nn = NeuralNetwork(8, [25], 1)
-nn.train(inputs, outputs, 10000)
-for i in range(256):
-    result = nn.feed_forward(bitz(i,8))
-    if result > 0.5 and i % 3 == 0:
+inputs = [bitz(i,b) for i in nums]
+outputs = [[1] if i % d == 0 and i > 0 else [0] for i in nums]
+nn = NeuralNetwork(b, [100], 1)
+nn.train(inputs, outputs, 1000)
+r = 0
+w = 0
+for i in range(5000):
+    result = nn.feed_forward(bitz(i,b))
+    if result > 0.8 and i % d == 0:
         print(i, ': ', result, ' nn is correct')
+        r += 1
     else:
-       if result < 0.5 and i % 3 != 0:
+       if result < 0.2 and i % d != 0:
            print(i, ': ', result, ' nn is correct')
+           r += 1
        else:
            print(i, ': ', result, ' nn is incorrect')
-
+           w += 1
+print('nn accuracy: ', r, '/', r + w, ' correctly identified from test data set')
 x = []
 y = []
-for i in range(25):
+for i in range(2500):
     x.append(i)
-    y.append(nn.feed_forward(bitz(i,8)))
+    y.append(nn.feed_forward(bitz(i,b)))
 plt.scatter(x,y)
 plt.show()
+
+n = 0
+while n != -1:
+    n = int(input('Enter number: '))
+    print('neural net thinks: ', nn.feed_forward(bitz(n,b)))
+
+
 #x = []
 #y = []
 #z = []
