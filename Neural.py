@@ -215,16 +215,3 @@ n = 0
 while n != -1:
     n = int(input('Enter number: '))
     print('neural net thinks: ', nn.feed_forward(bitz(n,b)))
-
-
-#x = []
-#y = []
-#z = []
-#for i in frange(0, 1.0, 0.0333):
-#    for j in frange(0, 1.0, 0.0333):
-#        ff = nn.feed_forward([i,j])
-#        x.append(i)
-#        y.append(j)
-#        z.append(ff)
-#plt.figure().add_subplot(111, projection='3d').scatter(x, y, z, c='g', marker='o')
-#plt.show()
