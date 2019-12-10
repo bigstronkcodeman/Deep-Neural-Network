@@ -24,7 +24,7 @@ class NeuralNetwork:
         num_outputs: number of neurons on the output layer
         """
         # initialize learning rate
-        self.learning_rate = 0.1
+        self.learning_rate = 0.5
 
         # initialize random synaptic weights and biases for first layer (input
         # layer) of the network
@@ -95,7 +95,7 @@ class NeuralNetwork:
                 # pump inputs through final layer of network and save result
                 layer_results.append(self.sigmoid(np.matmul(self.synaptic_weights[-1], layer_results[-1]) + self.biases[-1]))
 
-                # calculate output error and deltas for weights on last layer of network
+                # calculate output error and deltas for synaptic weights and biases on last layer of network
                 output_error = np.array(layer_results[-1] - training_output)
                 output_weight_deltas = np.full(self.synaptic_weights[-1].shape, 1.0)
                 output_bias_deltas = np.full(self.biases[-1].shape, 1.0)
@@ -169,6 +169,7 @@ def frange(x, y, step):
         yield x
         x += step
 
+# transform num into n-bit binary number
 def bitz(num, n):
     binary = []
     while num != 0:
@@ -180,38 +181,43 @@ def bitz(num, n):
     return binary
 
 
-b = 15
-d = 3
-nums = [rand.randint(2500,10000) for i in range(0, 1000, 1)]
-rand.shuffle(nums)
-inputs = [bitz(i,b) for i in nums]
-outputs = [[1] if i % d == 0 and i > 0 else [0] for i in nums]
-nn = NeuralNetwork(b, [100], 1)
-nn.train(inputs, outputs, 1000)
-r = 0
-w = 0
+b = 32 # number of bits accepted by network's input layer
+d = 2 # number to check division by
+nums = [rand.randint(5001, 30000) for i in range(0, 100, 1)] # initialize set of numbers to use for training
+rand.shuffle(nums) #shuffle number set
+inputs = [bitz(i,b) for i in nums] # initialize training inputs
+outputs = [[1] if i % d == 0 and i > 0 else [0] for i in nums] # initialize training outputs
+nn = NeuralNetwork(b, [4], 1) # initialize network
+nn.train(inputs, outputs, 100) # train the network
+
+# test network on test data set
+right = 0
+wrong = 0
 for i in range(5000):
     result = nn.feed_forward(bitz(i,b))
     if result > 0.8 and i % d == 0:
         print(i, ': ', result, ' nn is correct')
-        r += 1
+        right += 1
     else:
        if result < 0.2 and i % d != 0:
            print(i, ': ', result, ' nn is correct')
-           r += 1
+           right += 1
        else:
            print(i, ': ', result, ' nn is incorrect')
-           w += 1
-print('nn accuracy: ', r, '/', r + w, ' correctly identified from test data set')
+           wrong += 1
+print('nn accuracy: ', right, '/', right + wrong, ' correctly identified from test data set')
+
+# plot test network outputs for test data set
 x = []
 y = []
-for i in range(2500):
+for i in range(5000):
     x.append(i)
     y.append(nn.feed_forward(bitz(i,b)))
 plt.scatter(x,y)
 plt.show()
 
+# let user enter number and have network guess if the number is divisible by d
 n = 0
 while n != -1:
-    n = int(input('Enter number: '))
+    n = int(input('Enter number (-1 to exit): '))
     print('neural net thinks: ', nn.feed_forward(bitz(n,b)))
