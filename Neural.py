@@ -72,7 +72,7 @@ class NeuralNetwork:
             raise Exception('Different number of training inputs and training outputs!')
             
         for iters in range(iterations):
-            # calculate total cost of network
+            # calculate and display total cost of network
             average_output_error = np.full((len(training_outputs[0]), 1), 0.0)
             for inp, outp in zip(training_inputs, training_outputs):
                 training_output = np.array([outp]).T
