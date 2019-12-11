@@ -230,6 +230,7 @@ def frange(x, y, step):
         x += step
 
 # transform num into n-bit binary number
+# (or well, a list of its n-bits from msb->lsb)
 def bitz(num, n):
     binary = []
     while num != 0:
