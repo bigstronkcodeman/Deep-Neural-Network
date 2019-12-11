@@ -22,12 +22,17 @@ class NeuralNetwork:
         hidden_layers: a 1-dimensional array [x1,x2,...,xn] where xi represents the number of 
                        hidden neurons on layer i
         num_outputs: number of neurons on the output layer
+        activation_function: specifies an activation function to use for the entire network
+                             if the user does not wish to use different activation functions
+                             for different layers
+        layer_activations: a list of strings denoting the activation functions [af1,af2,...,afn] where
+                           afi represents the activation function to use for layer i
         """
         # range for weights and bias initialization
         a = -1
         b = 1
         # initialize learning rate
-        self.learning_rate = 0.3
+        self.learning_rate = 0.1
 
         # initialize random synaptic weights and biases for first layer (input
         # layer) of the network
@@ -96,11 +101,9 @@ class NeuralNetwork:
         else:
             return 0.1 if x <= 0 else 1.0
 
-    # sigmoid logistic function, used for neuronal activation
     def sigmoid(self, x):
         return 1 / (1 + np.exp(-x))
 
-    # sigmoid derivative, used for backpropagation
     def sigmoid_derivative(self, x):
         return x * (1 - x)
 
@@ -239,15 +242,15 @@ def bitz(num, n):
 
 
 b = 32 # number of bits accepted by network's input layer
-d = 3 # number to check division by
-nums = [rand.randint(5001, 2000000000) for i in range(0, 200, 1)] # initialize set of numbers to use for training
+d = 2 # number to check division by
+nums = [rand.randint(5001, 2000000000) for i in range(0, 1000, 1)] # initialize set of numbers to use for training
 rand.shuffle(nums) #shuffle number set
 inputs = [bitz(i,b) for i in nums] # initialize training inputs
 outputs = [[1.0] if i % d == 0 and i > 0 else [0.0] for i in nums] # initialize training outputs
 #inputs = [[0,0],[0,1],[1,0],[1,1]]
 #outputs = [[0],[1],[1],[0]]
-nn = NeuralNetwork(b, [3,3,3], 1, "sigmoid", ["leaky-relu", "leaky-relu", "leaky-relu", "sigmoid"]) # initialize network
-nn.train(inputs, outputs, 1000) # train the network
+nn = NeuralNetwork(b, [4], 1, "sigmoid", ["leaky-relu", "sigmoid"]) # initialize network
+nn.train(inputs, outputs, 100) # train the network
 
 # test network on test data set
 right = 0
@@ -281,6 +284,7 @@ while n != -1:
     n = int(input('Enter number (-1 to exit): '))
     print('neural net thinks: ', nn.feed_forward(bitz(n,b)))
 
+# for graphing 3-d functions "learned" by the network
 #x = []
 #y = []
 #z = []
