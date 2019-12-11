@@ -1,4 +1,4 @@
-# Deep Neural Network implementation (Multi-layer Perceptron)
+# General Deep Neural Network (Multi-layer Perceptron)
 # Author: Phillip Boudreau
 # Date: 11/26/2019
 import numpy as np
