@@ -142,14 +142,14 @@ class NeuralNetwork:
                 training_input = np.array([inp]).T
                 training_output = np.array([outp]).T
 
-                # pump inputs through first layer of network and save result
+                # feed inputs through first layer of network and save result
                 layer_results = [self.activation_functions[0](np.matmul(self.synaptic_weights[0], training_input) + self.biases[0])]
 
-                # sequentially pump inputs through hidden layers of the network and save results
+                # sequentially feed inputs through hidden layers of the network and save results
                 for i in range(1, len(self.synaptic_weights) - 1):
                     layer_results.append(self.activation_functions[i](np.matmul(self.synaptic_weights[i], layer_results[-1]) + self.biases[i]))
 
-                # pump inputs through final layer of network and save result
+                # feed inputs through final layer of network and save result
                 layer_results.append(self.activation_functions[-1](np.matmul(self.synaptic_weights[-1], layer_results[-1]) + self.biases[-1]))
 
                 # calculate output error and deltas for synaptic weights and biases on last layer of network
