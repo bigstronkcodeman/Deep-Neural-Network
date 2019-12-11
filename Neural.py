@@ -14,7 +14,7 @@ def sum(li):
     return s
 
 class NeuralNetwork:
-    def __init__(self, num_inputs, hidden_layers, num_outputs, activation_function = "sigmoid"):
+    def __init__(self, num_inputs, hidden_layers, num_outputs, activation_function = "sigmoid", layer_activations = []):
         """
         Initializes the random synaptic weights and biases of the neural network.
         Args:
@@ -27,7 +27,7 @@ class NeuralNetwork:
         a = -1
         b = 1
         # initialize learning rate
-        self.learning_rate = 0.1
+        self.learning_rate = 0.3
 
         # initialize random synaptic weights and biases for first layer (input
         # layer) of the network
@@ -45,6 +45,7 @@ class NeuralNetwork:
         self.synaptic_weights.append(np.random.uniform(a, b, (num_outputs, hidden_layers[-1])))
         self.biases.append(np.random.uniform(a, b, (num_outputs, 1)))
 
+        # initialize main activation function (to use if layer-specific activations are not specified)
         self.activation_function = self.sigmoid
         self.activation_function_derivative = self.sigmoid_derivative
         if activation_function == "relu":
@@ -53,6 +54,26 @@ class NeuralNetwork:
         if activation_function == "leaky-relu":
             self.activation_function = self.leaky_relu
             self.activation_function_derivative = self.leaky_relu_derivative
+
+        # initialize array of activation functions where the index of the function corresponds to which
+        # layer it is being used to activate
+        self.activation_functions = []
+        self.activation_functions_derivatives = []
+        if len(layer_activations) > 0 and len(layer_activations) == len(hidden_layers) + 1:
+           for i in range(len(layer_activations)):
+                if layer_activations[i] == "leaky-relu":
+                    self.activation_functions.append(self.leaky_relu)
+                    self.activation_functions_derivatives.append(self.leaky_relu_derivative)
+                elif layer_activations[i] == "relu":
+                    self.activation_functions.append(self.relu)
+                    self.activation_functions_derivatives.append(self.relu_derivative)
+                else:
+                    self.activation_functions.append(self.sigmoid)
+                    self.activation_functions_derivatives.append(self.sigmoid_derivative)
+        else:
+            for i in range(len(hidden_layers) + 1):
+                self.activation_functions.append(self.activation_function)
+                self.activation_functions_derivatives.append(self.activation_function_derivative)
 
     def relu(self, x):
         return np.maximum(x, 0)
@@ -66,6 +87,8 @@ class NeuralNetwork:
     def leaky_relu(self, x):
         if not np.isscalar(x):
             return np.array([0.1 * xi if xi <= 0 else xi for xi in x])
+        else:
+            return 0.1 * x if x <= 0 else x
 
     def leaky_relu_derivative(self, x):
         if not np.isscalar(x):
@@ -83,12 +106,12 @@ class NeuralNetwork:
 
     # feed inputs through the network
     def feed_forward(self, input):
-        new_input = self.activation_function(np.matmul(self.synaptic_weights[0], np.array([input]).T) + self.biases[0])
+        new_input = self.activation_functions[0](np.matmul(self.synaptic_weights[0], np.array([input]).T) + self.biases[0])
 
         for i in range(1, len(self.synaptic_weights) - 1):
-            new_input = self.activation_function(np.matmul(self.synaptic_weights[i], new_input) + self.biases[i])
+            new_input = self.activation_functions[i](np.matmul(self.synaptic_weights[i], new_input) + self.biases[i])
 
-        return self.activation_function(np.matmul(self.synaptic_weights[-1], new_input) + self.biases[-1])
+        return self.activation_functions[-1](np.matmul(self.synaptic_weights[-1], new_input) + self.biases[-1])
 
     def train(self, training_inputs, training_outputs, iterations):
         """
@@ -117,28 +140,30 @@ class NeuralNetwork:
                 training_output = np.array([outp]).T
 
                 # pump inputs through first layer of network and save result
-                layer_results = [self.activation_function(np.matmul(self.synaptic_weights[0], training_input) + self.biases[0])]
+                layer_results = [self.activation_functions[0](np.matmul(self.synaptic_weights[0], training_input) + self.biases[0])]
 
                 # sequentially pump inputs through hidden layers of the network and save results
                 for i in range(1, len(self.synaptic_weights) - 1):
-                    layer_results.append(self.activation_function(np.matmul(self.synaptic_weights[i], layer_results[-1]) + self.biases[i]))
+                    layer_results.append(self.activation_functions[i](np.matmul(self.synaptic_weights[i], layer_results[-1]) + self.biases[i]))
 
                 # pump inputs through final layer of network and save result
-                layer_results.append(self.activation_function(np.matmul(self.synaptic_weights[-1], layer_results[-1]) + self.biases[-1]))
+                layer_results.append(self.activation_functions[-1](np.matmul(self.synaptic_weights[-1], layer_results[-1]) + self.biases[-1]))
 
                 # calculate output error and deltas for synaptic weights and biases on last layer of network
+                act_func_index = -1
                 output_error = np.array(layer_results[-1] - training_output)
                 output_weight_deltas = np.full(self.synaptic_weights[-1].shape, 1.0)
                 output_bias_deltas = np.full(self.biases[-1].shape, 1.0)
                 for i in range(len(output_weight_deltas)):
                     for j in range(len(output_weight_deltas[i])):
                         output_weight_deltas[i][j] *= output_error[i][0]
-                        output_weight_deltas[i][j] *= self.activation_function_derivative(layer_results[-1][i][0])
+                        output_weight_deltas[i][j] *= self.activation_functions_derivatives[act_func_index](layer_results[-1][i][0])
                         output_weight_deltas[i][j] *= layer_results[-2][j][0]
                         output_weight_deltas[i][j] *= self.learning_rate
                     output_bias_deltas[i][0] *= output_error[i][0]
-                    output_bias_deltas[i][0] *= self.activation_function_derivative(layer_results[-1][i][0])
+                    output_bias_deltas[i][0] *= self.activation_functions_derivatives[act_func_index](layer_results[-1][i][0])
                     output_bias_deltas[i][0] *= self.learning_rate
+                act_func_index -= 1
                 weight_deltas = [output_weight_deltas]
                 bias_deltas = [output_bias_deltas]
 
@@ -152,18 +177,19 @@ class NeuralNetwork:
                         propagated_error = 0
                         for k in range(len(self.synaptic_weights[layer + 1])):
                             error = self.synaptic_weights[layer + 1][k][i]
-                            error *= self.activation_function_derivative(layer_results[layer + 1][k][0])
+                            error *= self.activation_functions_derivatives[act_func_index + 1](layer_results[layer + 1][k][0])
                             error *= save[k]
                             propagated_error += error
                         next_save.append(propagated_error)
                         for j in range(len(layer_weight_deltas[i])):
                             layer_weight_deltas[i][j] *= layer_results[layer - 1][j][0]
-                            layer_weight_deltas[i][j] *= self.activation_function_derivative(layer_results[layer][i][0])
+                            layer_weight_deltas[i][j] *= self.activation_functions_derivatives[act_func_index](layer_results[layer][i][0])
                             layer_weight_deltas[i][j] *= propagated_error
                             layer_weight_deltas[i][j] *= self.learning_rate
-                        layer_bias_deltas[i][0] *= self.activation_function_derivative(layer_results[layer][i][0])
+                        layer_bias_deltas[i][0] *= self.activation_functions_derivatives[act_func_index](layer_results[layer][i][0])
                         layer_bias_deltas[i][0] *= propagated_error
                         layer_bias_deltas[i][0] *= self.learning_rate
+                    act_func_index -= 1
                     save = next_save
                     weight_deltas.insert(0, layer_weight_deltas)
                     bias_deltas.insert(0, layer_bias_deltas)
@@ -175,15 +201,15 @@ class NeuralNetwork:
                     propagated_error = 0
                     for k in range(len(self.synaptic_weights[1])):
                         error = self.synaptic_weights[1][k][i]
-                        error *= self.activation_function_derivative(layer_results[1][k][0])
+                        error *= self.activation_functions_derivatives[act_func_index + 1](layer_results[1][k][0])
                         error *= save[k]
                         propagated_error += error
                     for j in range(len(input_weight_deltas[i])):
                         input_weight_deltas[i][j] *= training_input[j][0]
-                        input_weight_deltas[i][j] *= self.activation_function_derivative(layer_results[0][i][0])
+                        input_weight_deltas[i][j] *= self.activation_functions_derivatives[act_func_index](layer_results[0][i][0])
                         input_weight_deltas[i][j] *= propagated_error
                         input_weight_deltas[i][j] *= self.learning_rate
-                    input_bias_deltas[i][0] *= self.activation_function_derivative(layer_results[0][i][0])
+                    input_bias_deltas[i][0] *= self.activation_functions_derivatives[act_func_index](layer_results[0][i][0])
                     input_bias_deltas[i][0] *= propagated_error
                     input_bias_deltas[i][0] *= self.learning_rate
                 weight_deltas.insert(0, input_weight_deltas)
@@ -213,15 +239,15 @@ def bitz(num, n):
 
 
 b = 32 # number of bits accepted by network's input layer
-d = 4 # number to check division by
-nums = [rand.randint(5001, 30000) for i in range(0, 1000, 1)] # initialize set of numbers to use for training
+d = 3 # number to check division by
+nums = [rand.randint(5001, 2000000000) for i in range(0, 200, 1)] # initialize set of numbers to use for training
 rand.shuffle(nums) #shuffle number set
 inputs = [bitz(i,b) for i in nums] # initialize training inputs
-outputs = [[1] if i % d == 0 and i > 0 else [0] for i in nums] # initialize training outputs
+outputs = [[1.0] if i % d == 0 and i > 0 else [0.0] for i in nums] # initialize training outputs
 #inputs = [[0,0],[0,1],[1,0],[1,1]]
 #outputs = [[0],[1],[1],[0]]
-nn = NeuralNetwork(b, [5], 1, "leaky-relu") # initialize network
-nn.train(inputs, outputs, 100) # train the network
+nn = NeuralNetwork(b, [3,3,3], 1, "sigmoid", ["leaky-relu", "leaky-relu", "leaky-relu", "sigmoid"]) # initialize network
+nn.train(inputs, outputs, 1000) # train the network
 
 # test network on test data set
 right = 0
@@ -243,10 +269,10 @@ print('nn accuracy: ', right, '/', right + wrong, ' correctly identified from te
 # plot test network outputs for test data set
 x = []
 y = []
-for i in range(50000):
+for i in range(100):
     x.append(i)
-    y.append(nn.feed_forward(bitz(i,b)))
-plt.scatter(x,y)
+    y.append(nn.feed_forward(bitz(i,b)).reshape(1))
+plt.plot(x,y, color='red', marker='o')
 plt.show()
 
 # let user enter number and have network guess if the number is divisible by d
