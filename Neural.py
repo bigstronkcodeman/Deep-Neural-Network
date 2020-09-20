@@ -1,11 +1,30 @@
-# General Deep Neural Network (Multi-layer Perceptron)
+# Deep Neural Network implementation (Multi-layer Perceptron)
 # Author: Phillip Boudreau
-# Date: 11/26/2019
+# Date: 09/18/2020
 import numpy as np
 import random as rand
+from emnist import extract_training_samples, extract_test_samples
 
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
+
+np.set_printoptions(suppress=True)
+
+training_images, training_labels = extract_training_samples('digits')
+test_images, test_labels = extract_test_samples('digits')
+training_images = training_images[0:10000]
+training_labels = training_labels[0:10000]
+tr_i = [training_images[i].flatten().reshape(784).tolist() for i in range(len(training_images))]
+for i in range(len(tr_i)):
+    for j in range(len(tr_i[i])):
+        tr_i[i][j] /= 255.0
+tr_o = [[x] for x in training_labels.tolist()]
+tr_o = [[0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01] for i in range(len(training_labels))]
+for i in range(len(tr_o)):
+    tr_o[i][training_labels[i]] = 0.99
+
+epochs = []
+costs = []
 
 def sum(li):
     s = 0
@@ -31,6 +50,7 @@ class NeuralNetwork:
         # range for weights and bias initialization
         a = -1
         b = 1
+
         # initialize learning rate
         self.learning_rate = 0.1
 
@@ -128,28 +148,37 @@ class NeuralNetwork:
         if len(training_inputs) != len(training_outputs):
             raise Exception('Different number of training inputs and training outputs!')
             
+        global epochs
+        epochs = [i for i in range(iterations)]
+
         for iters in range(iterations):
             # calculate total cost of network
-            average_output_error = np.full((len(training_outputs[0]), 1), 0.0)
+            #average_output_error = np.full((len(training_outputs[0]), 1), 0.0)
+            average_output_error = 0
             for inp, outp in zip(training_inputs, training_outputs):
                 training_output = np.array([outp]).T
                 diff = np.array(training_output - self.feed_forward(inp))
-                average_output_error += np.array(diff * diff)
+                average_output_error += np.sum(np.array(diff * diff))
             average_output_error /= len(training_outputs)
+            average_output_error = np.sum(average_output_error)
+            costs.append(average_output_error.item())
+            
             print('Training iteration ', iters, ' total cost: ', average_output_error)
+            if average_output_error <= 0.01:
+                break
 
             for inp, outp in zip(training_inputs, training_outputs):
                 training_input = np.array([inp]).T
                 training_output = np.array([outp]).T
 
-                # feed inputs through first layer of network and save result
+                # pump inputs through first layer of network and save result
                 layer_results = [self.activation_functions[0](np.matmul(self.synaptic_weights[0], training_input) + self.biases[0])]
 
-                # sequentially feed inputs through hidden layers of the network and save results
+                # sequentially pump inputs through hidden layers of the network and save results
                 for i in range(1, len(self.synaptic_weights) - 1):
                     layer_results.append(self.activation_functions[i](np.matmul(self.synaptic_weights[i], layer_results[-1]) + self.biases[i]))
 
-                # feed inputs through final layer of network and save result
+                # pump inputs through final layer of network and save result
                 layer_results.append(self.activation_functions[-1](np.matmul(self.synaptic_weights[-1], layer_results[-1]) + self.biases[-1]))
 
                 # calculate output error and deltas for synaptic weights and biases on last layer of network
@@ -223,77 +252,52 @@ class NeuralNetwork:
                     self.synaptic_weights[i] -= weight_deltas[i]
                     self.biases[i] -= bias_deltas[i]
 
-
 def frange(x, y, step):
     while x < y:
         yield x
         x += step
 
-# transform num into n-bit binary number
-# (or well, a list of its n bits from msb->lsb)
-def bitz(num, n):
-    binary = []
-    while num != 0:
-        bit = num % 2
-        binary.insert(0, bit)
-        num = int(num / 2)
-    while len(binary) < n:
-        binary.insert(0, 0)
-    return binary
-
-
-b = 32 # number of bits accepted by network's input layer
-d = 2 # number to check division by
-nums = [rand.randint(5001, 2000000000) for i in range(0, 1000, 1)] # initialize set of numbers to use for training
-rand.shuffle(nums) #shuffle number set
-inputs = [bitz(i,b) for i in nums] # initialize training inputs
-outputs = [[1.0] if i % d == 0 and i > 0 else [0.0] for i in nums] # initialize training outputs
-#inputs = [[0,0],[0,1],[1,0],[1,1]]
-#outputs = [[0],[1],[1],[0]]
-nn = NeuralNetwork(b, [4], 1, "sigmoid", ["leaky-relu", "sigmoid"]) # initialize network
-nn.train(inputs, outputs, 100) # train the network
-
-# test network on test data set
-right = 0
-wrong = 0
-for i in range(5000):
-    result = nn.feed_forward(bitz(i,b))
-    if result > 0.8 and i % d == 0:
-        print(i, ': ', result, ' nn is correct')
-        right += 1
-    else:
-       if result < 0.2 and i % d != 0:
-           print(i, ': ', result, ' nn is correct')
-           right += 1
-       else:
-           print(i, ': ', result, ' nn is incorrect')
-           wrong += 1
-print('nn accuracy: ', right, '/', right + wrong, ' correctly identified from test data set')
-
-# plot test network outputs for test data set
-x = []
-y = []
-for i in range(100):
-    x.append(i)
-    y.append(nn.feed_forward(bitz(i,b)).reshape(1))
-plt.plot(x,y, color='red', marker='o')
-plt.show()
-
-# let user enter number and have network guess if the number is divisible by d
-n = 0
-while n != -1:
-    n = int(input('Enter number (-1 to exit): '))
-    print('neural net thinks: ', nn.feed_forward(bitz(n,b)))
-
 # for graphing 3-d functions "learned" by the network
-#x = []
-#y = []
-#z = []
-#for i in frange(0, 1.0, 0.0333):
-#    for j in frange(0, 1.0, 0.0333):
-#        ff = nn.feed_forward([i,j])
-#        x.append(i)
-#        y.append(j)
-#        z.append(ff)
-#plt.figure().add_subplot(111, projection='3d').scatter(x, y, z, c='g', marker='o')
-#plt.show()
+def graph_3D():
+    x = []
+    y = []
+    z = []
+    for i in frange(0, 1.0, 0.025):
+        for j in frange(0, 1.0, 0.025):
+            ff = nn.feed_forward([i,j])
+            x.append(i)
+            y.append(j)
+            z.append(ff)
+    plt.figure().add_subplot(111, projection='3d').scatter(x, y, z, c='b', marker='.')
+    plt.show()
+
+# plot cost of network over training
+def plot_cost():
+    plt.plot(epochs, costs, color='red', marker='.')
+    plt.title('Network Training Cost vs. Training Iterations')
+    plt.xlabel('Epoch')
+    plt.ylabel('Cost')
+    plt.show()
+
+def main():
+    nn = NeuralNetwork(784, [16,16], 10) # initialize network
+    nn.train(tr_i, tr_o, 1000) # train the network
+
+    correct = 0
+    for test_image, test_label in zip(test_images[0:500], test_labels[0:500]):
+        result = nn.feed_forward(test_image.flatten().reshape(784).tolist())
+        print("network result:\n", result);
+        max = 0
+        guess = -1
+        for i in range(len(result)):
+            if result[i] > max:
+                max = result[i]
+                guess = i
+        print('network thinks this is a: ', guess)
+        print("real answer:", test_label)
+        if guess == int(test_label):
+            correct += 1
+    print('network was correct on ', correct, '/', 500, 'images')
+
+if __name__ == '__main__':
+    main()
