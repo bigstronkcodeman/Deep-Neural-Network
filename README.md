@@ -5,7 +5,8 @@ By default, this model works to identify handwritten digits from the MNIST handw
 
 The number of hidden layers can be specified, as well as the number of neurons, controllable on a per-layer basis.
 
-Example usage: ```py
+Example usage: 
+```
 # instantiates a network with 784 input neurons, two hidden layers of 16 neurons each, with 10 output neurons (sigmoid activation by default)
 nn = NeuralNetwork(784, [16,16], 10) 
 
