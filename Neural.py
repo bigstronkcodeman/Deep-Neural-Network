@@ -268,10 +268,12 @@ def main():
     test_images, test_labels = extract_test_samples('digits')
     training_images = training_images[0:10000]
     training_labels = training_labels[0:10000]
+    
     tr_i = [training_images[i].flatten().reshape(784).tolist() for i in range(len(training_images))]
     for i in range(len(tr_i)):
         for j in range(len(tr_i[i])):
             tr_i[i][j] /= 255.0
+            
     tr_o = [[x] for x in training_labels.tolist()]
     tr_o = [[0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01] for i in range(len(training_labels))]
     for i in range(len(tr_o)):
