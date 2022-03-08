@@ -188,13 +188,13 @@ class NeuralNetwork:
                 output_bias_deltas = np.full(self.biases[-1].shape, 1.0)
                 for i in range(len(output_weight_deltas)):
                     for j in range(len(output_weight_deltas[i])):
-                        output_weight_deltas[i][j] *= output_error[i][0]
-                        output_weight_deltas[i][j] *= self.activation_functions_derivatives[act_func_index](layer_results[-1][i][0])
-                        output_weight_deltas[i][j] *= layer_results[-2][j][0]
-                        output_weight_deltas[i][j] *= self.learning_rate
-                    output_bias_deltas[i][0] *= output_error[i][0]
-                    output_bias_deltas[i][0] *= self.activation_functions_derivatives[act_func_index](layer_results[-1][i][0])
-                    output_bias_deltas[i][0] *= self.learning_rate
+                        output_weight_deltas[i][j] *= output_error[i][0]                                                             \
+                                                    * self.activation_functions_derivatives[act_func_index](layer_results[-1][i][0]) \
+                                                    * layer_results[-2][j][0]                                                        \
+                                                    * self.learning_rate
+                    output_bias_deltas[i][0] *= output_error[i][0]                                                             \
+                                              * self.activation_functions_derivatives[act_func_index](layer_results[-1][i][0]) \
+                                              * self.learning_rate
                 act_func_index -= 1
                 weight_deltas = [output_weight_deltas]
                 bias_deltas = [output_bias_deltas]
@@ -209,18 +209,18 @@ class NeuralNetwork:
                         propagated_error = 0
                         for k in range(len(self.synaptic_weights[layer + 1])):
                             error = self.synaptic_weights[layer + 1][k][i]
-                            error *= self.activation_functions_derivatives[act_func_index + 1](layer_results[layer + 1][k][0])
-                            error *= save[k]
+                            error *= self.activation_functions_derivatives[act_func_index + 1](layer_results[layer + 1][k][0]) \
+                                   * save[k]
                             propagated_error += error
                         next_save.append(propagated_error)
                         for j in range(len(layer_weight_deltas[i])):
-                            layer_weight_deltas[i][j] *= layer_results[layer - 1][j][0]
-                            layer_weight_deltas[i][j] *= self.activation_functions_derivatives[act_func_index](layer_results[layer][i][0])
-                            layer_weight_deltas[i][j] *= propagated_error
-                            layer_weight_deltas[i][j] *= self.learning_rate
-                        layer_bias_deltas[i][0] *= self.activation_functions_derivatives[act_func_index](layer_results[layer][i][0])
-                        layer_bias_deltas[i][0] *= propagated_error
-                        layer_bias_deltas[i][0] *= self.learning_rate
+                            layer_weight_deltas[i][j] *= layer_results[layer - 1][j][0] \
+                                                       * self.activation_functions_derivatives[act_func_index](layer_results[layer][i][0]) \
+                                                       * propagated_error                                                                  \
+                                                       * self.learning_rate
+                        layer_bias_deltas[i][0] *= self.activation_functions_derivatives[act_func_index](layer_results[layer][i][0]) \
+                                                 * propagated_error \
+                                                 * self.learning_rate
                     act_func_index -= 1
                     save = next_save
                     weight_deltas.insert(0, layer_weight_deltas)
@@ -233,17 +233,17 @@ class NeuralNetwork:
                     propagated_error = 0
                     for k in range(len(self.synaptic_weights[1])):
                         error = self.synaptic_weights[1][k][i]
-                        error *= self.activation_functions_derivatives[act_func_index + 1](layer_results[1][k][0])
-                        error *= save[k]
+                        error *= self.activation_functions_derivatives[act_func_index + 1](layer_results[1][k][0]) \
+                               * save[k]
                         propagated_error += error
                     for j in range(len(input_weight_deltas[i])):
-                        input_weight_deltas[i][j] *= training_input[j][0]
-                        input_weight_deltas[i][j] *= self.activation_functions_derivatives[act_func_index](layer_results[0][i][0])
-                        input_weight_deltas[i][j] *= propagated_error
-                        input_weight_deltas[i][j] *= self.learning_rate
-                    input_bias_deltas[i][0] *= self.activation_functions_derivatives[act_func_index](layer_results[0][i][0])
-                    input_bias_deltas[i][0] *= propagated_error
-                    input_bias_deltas[i][0] *= self.learning_rate
+                        input_weight_deltas[i][j] *= training_input[j][0]                                                          \
+                                                   * self.activation_functions_derivatives[act_func_index](layer_results[0][i][0]) \
+                                                   * propagated_error                                                              \
+                                                   * self.learning_rate
+                    input_bias_deltas[i][0] *= self.activation_functions_derivatives[act_func_index](layer_results[0][i][0]) \
+                                             * propagated_error                                                              \
+                                             * self.learning_rate                                                            
                 weight_deltas.insert(0, input_weight_deltas)
                 bias_deltas.insert(0, input_bias_deltas)
 
