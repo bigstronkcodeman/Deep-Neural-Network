@@ -8,29 +8,8 @@ from emnist import extract_training_samples, extract_test_samples
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 
-np.set_printoptions(suppress=True)
-
-training_images, training_labels = extract_training_samples('digits')
-test_images, test_labels = extract_test_samples('digits')
-training_images = training_images[0:10000]
-training_labels = training_labels[0:10000]
-tr_i = [training_images[i].flatten().reshape(784).tolist() for i in range(len(training_images))]
-for i in range(len(tr_i)):
-    for j in range(len(tr_i[i])):
-        tr_i[i][j] /= 255.0
-tr_o = [[x] for x in training_labels.tolist()]
-tr_o = [[0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01] for i in range(len(training_labels))]
-for i in range(len(tr_o)):
-    tr_o[i][training_labels[i]] = 0.99
-
 epochs = []
 costs = []
-
-def sum(li):
-    s = 0
-    for i in range(len(li)):
-        s += li[i]
-    return s
 
 class NeuralNetwork:
     def __init__(self, num_inputs, hidden_layers, num_outputs, activation_function = "sigmoid", layer_activations = []):
@@ -251,6 +230,21 @@ class NeuralNetwork:
                 for i in range(len(weight_deltas)):
                     self.synaptic_weights[i] -= weight_deltas[i]
                     self.biases[i] -= bias_deltas[i]
+                    
+np.set_printoptions(suppress=True)
+
+training_images, training_labels = extract_training_samples('digits')
+test_images, test_labels = extract_test_samples('digits')
+training_images = training_images[0:10000]
+training_labels = training_labels[0:10000]
+tr_i = [training_images[i].flatten().reshape(784).tolist() for i in range(len(training_images))]
+for i in range(len(tr_i)):
+    for j in range(len(tr_i[i])):
+        tr_i[i][j] /= 255.0
+tr_o = [[x] for x in training_labels.tolist()]
+tr_o = [[0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01] for i in range(len(training_labels))]
+for i in range(len(tr_o)):
+    tr_o[i][training_labels[i]] = 0.99
 
 def frange(x, y, step):
     while x < y:
