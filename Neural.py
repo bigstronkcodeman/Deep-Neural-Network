@@ -231,20 +231,7 @@ class NeuralNetwork:
                     self.synaptic_weights[i] -= weight_deltas[i]
                     self.biases[i] -= bias_deltas[i]
                     
-np.set_printoptions(suppress=True)
-
-training_images, training_labels = extract_training_samples('digits')
-test_images, test_labels = extract_test_samples('digits')
-training_images = training_images[0:10000]
-training_labels = training_labels[0:10000]
-tr_i = [training_images[i].flatten().reshape(784).tolist() for i in range(len(training_images))]
-for i in range(len(tr_i)):
-    for j in range(len(tr_i[i])):
-        tr_i[i][j] /= 255.0
-tr_o = [[x] for x in training_labels.tolist()]
-tr_o = [[0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01] for i in range(len(training_labels))]
-for i in range(len(tr_o)):
-    tr_o[i][training_labels[i]] = 0.99
+                    
 
 def frange(x, y, step):
     while x < y:
@@ -274,9 +261,27 @@ def plot_cost():
     plt.show()
 
 def main():
-    nn = NeuralNetwork(784, [16,16], 10) # initialize network
-    nn.train(tr_i, tr_o, 1000) # train the network
+    np.set_printoptions(suppress=True)
 
+    # prepare training and testing datasets
+    training_images, training_labels = extract_training_samples('digits')
+    test_images, test_labels = extract_test_samples('digits')
+    training_images = training_images[0:10000]
+    training_labels = training_labels[0:10000]
+    tr_i = [training_images[i].flatten().reshape(784).tolist() for i in range(len(training_images))]
+    for i in range(len(tr_i)):
+        for j in range(len(tr_i[i])):
+            tr_i[i][j] /= 255.0
+    tr_o = [[x] for x in training_labels.tolist()]
+    tr_o = [[0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01] for i in range(len(training_labels))]
+    for i in range(len(tr_o)):
+        tr_o[i][training_labels[i]] = 0.99
+       
+    # initialize and train the network
+    nn = NeuralNetwork(784, [16,16], 10)
+    nn.train(tr_i, tr_o, 1000)
+
+    # gauge performance
     correct = 0
     for test_image, test_label in zip(test_images[0:500], test_labels[0:500]):
         result = nn.feed_forward(test_image.flatten().reshape(784).tolist())
