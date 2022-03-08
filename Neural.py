@@ -193,7 +193,7 @@ class NeuralNetwork:
                             propagated_error += error
                         next_save.append(propagated_error)
                         for j in range(len(layer_weight_deltas[i])):
-                            layer_weight_deltas[i][j] *= layer_results[layer - 1][j][0] \
+                            layer_weight_deltas[i][j] *= layer_results[layer - 1][j][0]                                                    \
                                                        * self.activation_functions_derivatives[act_func_index](layer_results[layer][i][0]) \
                                                        * propagated_error                                                                  \
                                                        * self.learning_rate
