@@ -289,9 +289,9 @@ def main():
         print("network result:\n", result);
         max = 0
         guess = -1
-        for i in range(len(result)):
-            if result[i] > max:
-                max = result[i]
+        for i, res in enumerate(result):
+            if res > max:
+                max = res
                 guess = i
         print('network thinks this is a: ', guess)
         print("real answer:", test_label)
