@@ -1,5 +1,5 @@
 # Customizable Deep Neural Network
-A from-scratch implementation of a deep artificial neural network that supports any number of hidden layers / neurons per layer (not optimized for speed, made just for fun - I wanted to avoid relying on libraries NumPy as a challenge to myself).
+A from-scratch implementation of a deep artificial neural network that supports any number of hidden layers / neurons per layer (not optimized for speed, made just for fun - I wanted to avoid relying on libraries such as NumPy as a challenge to myself).
 
 By default, this model works to identify handwritten digits from the MNIST handwritten character dataset.
 
